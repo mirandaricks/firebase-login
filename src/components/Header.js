@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Header = ({isAuthenticated}) => {
+const Header = ({isAuthenticated, onLogout}) => {
   return (
     <nav className="menu">
       <ul>
@@ -21,7 +21,10 @@ const Header = ({isAuthenticated}) => {
         )}
         {isAuthenticated && (
           <li>
-            <button className="btnLink" onClick={(event) => {}}>
+            <button className="btnLink" onClick={(event) => {
+              event.preventDefault()
+              onLogout()
+              }}>
               Logout
             </button>
           </li>

@@ -6,12 +6,13 @@ import {
   Redirect,
 } from "react-router-dom";
 import Header from "./components/Header";
-import TabelaHome from "./components/TabelaHome"
+import TabelaHome from "./components/TabelaHome";
 import TabelaLivros from "./components/TabelaLivros";
 import CadastrarLivros from "./components/CadastrarLivros";
 import NotFound from "./components/NotFound";
 import SimpleStorage from "react-simple-storage";
 import Login from "./components/Login";
+import firebase from "./firebase";
 
 class App extends Component {
   state = {
@@ -44,29 +45,47 @@ class App extends Component {
     }
   };
 
-  componentDidMount() {
-    this.setState({
-      isAuthenticated: false,
-    });
-  }
+  onLogin = (email, password) => {
+    firebase
+      .auth()
+      .signInWithEmailAndPassword(email, password)
+      .then((user) => {
+        this.setState({ isAuthenticated: true });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+  onLogout = () => {
+    firebase
+      .auth()
+      .signOut()
+      .then(() => {
+        this.setState({ isAuthenticated: false });
+      })
+      .catch((error)=> console.log(error))
+  };
 
   render() {
     return (
       <Router>
         <SimpleStorage parent={this} />
-        <Header isAuthenticated={this.state.isAuthenticated}/>
+        <Header
+          isAuthenticated={this.state.isAuthenticated}
+          onLogout={this.onLogout}
+        />
         <Switch>
           <Route
             exact
             path="/"
             render={() =>
-              this.state.isAuthenticated === false ? (
-                <TabelaHome livros={this.state.livros} />
-              ) : (
+              this.state.isAuthenticated ? (
                 <TabelaLivros
                   livros={this.state.livros}
                   removerLivro={this.removerLivro}
                 />
+              ) : (
+                <TabelaHome livros={this.state.livros} />
               )
             }
           />
@@ -80,7 +99,17 @@ class App extends Component {
               />
             )}
           />
-          <Route exact path="/login" render={() => <Login />} />
+          <Route
+            exact
+            path="/login"
+            render={() =>
+              !this.state.isAuthenticated ? (
+                <Login onLogin={this.onLogin} />
+              ) : (
+                <Redirect to="/" />
+              )
+            }
+          />
           <Route
             exact
             path="/editar/:isbnLivro"
@@ -100,7 +129,6 @@ class App extends Component {
               }
             }}
           />
-
           <Route component={NotFound} />
         </Switch>
       </Router>
